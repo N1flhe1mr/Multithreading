@@ -1,19 +1,23 @@
 package ru.netology;
 
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 public class Main {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
         String[] texts = new String[25];
-        List<Thread> threads = new ArrayList<>();
+        List<Future<Integer>> futures = new ArrayList<>();
         for (int i = 0; i < texts.length; i++) {
             texts[i] = generateText("aab", 30_000);
         }
 
         for (int l = 0; l < texts.length; l++) {
             int target = l;
-            Runnable runnableLogic = () -> {
+            Callable<Integer> callableLogic = () -> {
                 int maxSize = 0;
                 String string = texts[target];
                 for (int i = 0; i < string.length(); i++) {
@@ -34,12 +38,13 @@ public class Main {
                     }
                 }
                 System.out.println(string.substring(0, 100) + " -> " + maxSize);
+                return maxSize;
             };
-            threads.add(new Thread(runnableLogic, "Thread" + l));
+            futures.add(new FutureTask<>(callableLogic));
         }
         long startTs = System.currentTimeMillis(); // start time
-        for (Thread thread : threads) {
-            thread.start();
+        for (Future<Integer> future : futures) {
+            new Thread((Runnable) future).start();
         }
         /* for (String text : texts) {
             int maxSize = 0;
@@ -62,11 +67,15 @@ public class Main {
             }
             System.out.println(text.substring(0, 100) + " -> " + maxSize);
         } */
-        for (Thread thread : threads) {
-            thread.join();
+        int max = 0;
+        for (Future<Integer> future : futures) {
+            if (future.get() > max) {
+                max = future.get();
+            }
         }
-        long endTs = System.currentTimeMillis(); // end tim
+        long endTs = System.currentTimeMillis(); // end time
         System.out.println("Time: " + (endTs - startTs) + "ms");
+        System.out.println("Max: " + max);
     }
 
     public static String generateText(String letters, int length) {
