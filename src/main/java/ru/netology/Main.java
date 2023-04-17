@@ -65,7 +65,7 @@ public class Main {
         for (Thread thread : threads) {
             thread.join();
         }
-        long endTs = System.currentTimeMillis(); // end tim
+        long endTs = System.currentTimeMillis(); // end time
         System.out.println("Time: " + (endTs - startTs) + "ms");
     }
 
